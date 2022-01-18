@@ -3,7 +3,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include <stdio.h>
-/* #include "imgui_impl_opengl3_loader.h" */
+
 #if defined(BOB)
 #include <GL/glew.h>
 #else
@@ -17,8 +17,19 @@
 #include <cstdlib>
 
 static void glfw_error_callback(int error, const char* description)
-{
-    fprintf(stderr, "Glfw Error %d: %s\n", error, description);
+{ // Executes when a GLFW error occurs.
+    // Show me the error code and a UTF-8 encoded string describing the error.
+    printf("GLFW Error %d: %s\n", error, description);
+    fflush(stdout);
+}
+
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{ // Executes when user does a key
+
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+    {
+        glfwSetWindowShouldClose(window, GL_TRUE);
+    }
 }
 
 // ERROR ERROR
@@ -66,9 +77,30 @@ int main(int, char**)
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // Enable vsync
 
+    // Pressing keys does stuff
+    glfwSetKeyCallback(window, key_callback);
+
 #if defined(BOB)
-    glewExperimental = true;
-    glewInit();
+    // Initialize GLEW
+    GLenum error_code = glewInit();
+    if (GLEW_OK != error_code)
+    { // ERROR
+        printf("ERROR: cannot initialize glew\n");
+        glfwTerminate();
+        return -1;
+    }
+    else
+    { // Show me what version stuffs I'm using
+        // Show me the GLEW version
+        printf("Using GLEW %s\n", glewGetString(GLEW_VERSION));
+        // Show me the OpenGL version
+        GLint major = 0;
+        GLint minor = 0;
+        glGetIntegerv(GL_MAJOR_VERSION, &major);
+        glGetIntegerv(GL_MINOR_VERSION, &minor);
+        printf("Using OpenGL %d.%d\n", major, minor);
+        fflush(stdout);
+    }
 #endif
 
     // ERROR ERROR
@@ -91,8 +123,8 @@ int main(int, char**)
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     // Texture dimensions
-    const int tex_w = 640;
-    const int tex_h = 380;
+    const int tex_w = 672;
+    const int tex_h = 392;
     const int tex_channel_count = 1;
 
     // Texture buffer (CPU-side)
@@ -129,7 +161,8 @@ int main(int, char**)
     }
     else
     {
-        fprintf(stderr, "NOT GOOD\n");
+        printf("NOT GOOD\n");
+        fflush(stdout);
         return 1;
     }
 
@@ -147,7 +180,7 @@ int main(int, char**)
     // color to be something OTHER than red
 
     glTexImage2D(GL_TEXTURE_2D, 0, texture_channel_format, tex_w, tex_h, 0, texture_channel_format, GL_UNSIGNED_BYTE, texture_data_buffer);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tex_w, tex_h, 0, GL_RGB, GL_UNSIGNED_BYTE, texture_data_buffer);
+    /* glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,                 tex_w, tex_h, 0, GL_RGB,                 GL_UNSIGNED_BYTE, texture_data_buffer); */
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -158,8 +191,6 @@ int main(int, char**)
     // Main loop
     while (!glfwWindowShouldClose(window))
     {
-        glfwPollEvents();
-
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -217,6 +248,7 @@ int main(int, char**)
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwSwapBuffers(window);
+        glfwPollEvents();
     }
 
     // Cleanup
@@ -232,3 +264,4 @@ int main(int, char**)
 
     return 0;
 }
+// vim:fdm=syntax:
