@@ -1,0 +1,5 @@
+*.o
+*.exe
+tags
+lib-tags
+*.ini
